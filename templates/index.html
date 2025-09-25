@@ -132,35 +132,45 @@ document.addEventListener('DOMContentLoaded', function() {
     const btnNovoLogin = document.getElementById('btn-novo-login');
     
     if (cpfSalvo && telefoneSalvo && nomeSalvo) {
-        // Tem dados salvos - mostrar opção de login rápido
-        loginRapidoContainer.style.display = 'block';
-        botaoPadrao.style.display = 'none';
+        // Tem dados salvos - fazer login automático direto
+        console.log('Dados salvos encontrados, fazendo login automático...');
         
         // Preencher o formulário oculto
         document.getElementById('cpf-salvo').value = cpfSalvo;
         document.getElementById('telefone-salvo').value = telefoneSalvo;
         
-        // Evento do botão login rápido
-        btnLoginRapido.addEventListener('click', function() {
-            addButtonLoading(this);
-            document.getElementById('form-login-automatico').submit();
-        });
+        // Fazer login automático imediatamente
+        document.getElementById('form-login-automatico').submit();
         
-        // Evento do botão novo login
-        btnNovoLogin.addEventListener('click', function() {
-            // Limpar dados salvos
-            localStorage.removeItem('clube_qz_cpf');
-            localStorage.removeItem('clube_qz_telefone');
-            localStorage.removeItem('clube_qz_nome');
-            localStorage.removeItem('clube_qz_data_nascimento');
+        // Como fallback, se por algum motivo o submit não funcionou, mostrar opções
+        setTimeout(function() {
+            loginRapidoContainer.style.display = 'block';
+            botaoPadrao.style.display = 'none';
             
-            // Redirecionar para verificação normal
-            window.location.href = '{{ url_for("cliente.verificar_cpf") }}';
-        });
+            // Evento do botão login rápido (caso seja necessário)
+            btnLoginRapido.addEventListener('click', function() {
+                addButtonLoading(this);
+                document.getElementById('form-login-automatico').submit();
+            });
+            
+            // Evento do botão novo login
+            btnNovoLogin.addEventListener('click', function() {
+                // Limpar dados salvos
+                localStorage.removeItem('clube_qz_cpf');
+                localStorage.removeItem('clube_qz_telefone');
+                localStorage.removeItem('clube_qz_nome');
+                localStorage.removeItem('clube_qz_data_nascimento');
+                
+                // Redirecionar para verificação normal
+                window.location.href = '{{ url_for("cliente.verificar_cpf") }}';
+            });
+        }, 1000); // Aguarda 1 segundo antes de mostrar como fallback
+        
     } else {
         // Não tem dados salvos - mostrar botão padrão
         loginRapidoContainer.style.display = 'none';
         botaoPadrao.style.display = 'block';
+        console.log('Nenhum dado salvo encontrado, mostrando tela inicial normal');
     }
 });
 </script>

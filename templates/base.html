@@ -30,9 +30,16 @@
     <!-- Global Loading Screen -->
     <div id="global-loading-screen" class="global-loading-overlay">
         <div class="global-loading-container">
-            <div class="global-loading-spinner"></div>
-            <h5 class="text-white mt-3">Carregando...</h5>
-            <p class="text-white-50">Preparando sistema</p>
+            <div class="global-loading-spinner-modern">
+                <div class="spinner-ring"></div>
+                <div class="spinner-ring"></div>
+                <div class="spinner-ring"></div>
+            </div>
+            <div class="loading-progress-container">
+                <div class="loading-progress-bar"></div>
+            </div>
+            <h5 class="text-white mt-3" id="loading-title">Carregando...</h5>
+            <p class="text-white-50" id="loading-subtitle">Preparando sistema</p>
         </div>
     </div>
 
@@ -156,23 +163,153 @@
             }
         });
         
-        // Global Loading Control
+        // Enhanced Global Loading Control with Smart Detection
+        let loadingProgress = 0;
+        let loadingInterval = null;
+        let loadingComplete = false;
+        
         function showGlobalLoading() {
-            document.getElementById('global-loading-screen').style.display = 'flex';
-            document.getElementById('main-wrapper').style.display = 'none';
+            const loadingScreen = document.getElementById('global-loading-screen');
+            const mainWrapper = document.getElementById('main-wrapper');
+            
+            if (loadingScreen) {
+                loadingScreen.style.display = 'flex';
+                loadingScreen.style.opacity = '1';
+            }
+            if (mainWrapper) {
+                mainWrapper.style.display = 'none';
+            }
+            
+            loadingComplete = false;
         }
         
         function hideGlobalLoading() {
-            document.getElementById('global-loading-screen').style.display = 'none';
-            document.getElementById('main-wrapper').style.display = 'block';
+            if (loadingComplete) return; // Prevent multiple calls
+            loadingComplete = true;
+            
+            const loadingScreen = document.getElementById('global-loading-screen');
+            const mainWrapper = document.getElementById('main-wrapper');
+            
+            // Clear interval immediately
+            if (loadingInterval) {
+                clearInterval(loadingInterval);
+                loadingInterval = null;
+            }
+            
+            if (loadingScreen) {
+                loadingScreen.style.opacity = '0';
+                setTimeout(() => {
+                    if (loadingScreen) {
+                        loadingScreen.style.display = 'none';
+                    }
+                }, 300);
+            }
+            if (mainWrapper) {
+                mainWrapper.style.display = 'block';
+            }
         }
         
-        // Show loading initially and hide after page loads
+        function updateLoadingProgress(percent, title, subtitle) {
+            const progressBar = document.querySelector('.loading-progress-bar');
+            const titleElement = document.getElementById('loading-title');
+            const subtitleElement = document.getElementById('loading-subtitle');
+            
+            if (progressBar) {
+                progressBar.style.width = percent + '%';
+            }
+            
+            if (titleElement && title) {
+                titleElement.textContent = title;
+            }
+            
+            if (subtitleElement && subtitle) {
+                subtitleElement.textContent = subtitle;
+            }
+        }
+        
+        function getContextualLoadingMessage() {
+            const currentPath = window.location.pathname;
+            
+            if (currentPath === '/dashboard') {
+                return { title: 'Carregando Dashboard', subtitle: 'Atualizando seus dados...' };
+            } else if (currentPath === '/cadastrar_nota') {
+                return { title: 'Preparando Formulário', subtitle: 'Carregando validações...' };
+            } else if (currentPath === '/mostrar_notas') {
+                return { title: 'Carregando Notas', subtitle: 'Buscando suas compras...' };
+            } else if (currentPath === '/mostrar_numeros') {
+                return { title: 'Carregando Números', subtitle: 'Seus números da sorte...' };
+            } else if (currentPath === '/informacoes') {
+                return { title: 'Carregando Informações', subtitle: 'Regras do sorteio...' };
+            } else {
+                return { title: 'Carregando Clube QZ', subtitle: 'Preparando sistema...' };
+            }
+        }
+        
+        function startSmartLoading() {
+            // Clear any existing interval first
+            if (loadingInterval) {
+                clearInterval(loadingInterval);
+                loadingInterval = null;
+            }
+            
+            const messages = getContextualLoadingMessage();
+            updateLoadingProgress(0, messages.title, messages.subtitle);
+            
+            loadingProgress = 0;
+            loadingComplete = false;
+            
+            // Simular progresso de carregamento mais realista
+            loadingInterval = setInterval(() => {
+                if (loadingComplete) {
+                    return; // Stop if loading is already complete
+                }
+                
+                if (loadingProgress < 70) {
+                    loadingProgress += Math.random() * 15 + 5; // Progresso mais rápido no início
+                } else if (loadingProgress < 90) {
+                    loadingProgress += Math.random() * 8 + 2; // Mais devagar perto do fim
+                } else if (loadingProgress < 95) {
+                    loadingProgress += Math.random() * 2 + 0.5; // Muito devagar no final
+                }
+                
+                if (loadingProgress >= 100) {
+                    loadingProgress = 100;
+                    updateLoadingProgress(100, messages.title, 'Concluído!');
+                    
+                    // Clear interval immediately when complete
+                    clearInterval(loadingInterval);
+                    loadingInterval = null;
+                    
+                    // Schedule hide only once
+                    setTimeout(hideGlobalLoading, 200);
+                } else {
+                    updateLoadingProgress(Math.floor(loadingProgress), messages.title, messages.subtitle);
+                }
+            }, 100);
+        }
+        
+        // Enhanced loading detection
         document.addEventListener('DOMContentLoaded', function() {
-            // Small delay to simulate loading and improve user experience
-            setTimeout(function() {
-                hideGlobalLoading();
-            }, 800);
+            startSmartLoading();
+            
+            // Hide loading when everything is really ready
+            window.addEventListener('load', function() {
+                // Wait a bit more for all resources
+                setTimeout(function() {
+                    if (!loadingComplete && loadingProgress < 100) {
+                        loadingProgress = 100;
+                        updateLoadingProgress(100, 'Carregamento Completo', 'Pronto!');
+                        
+                        // Clear interval if still running
+                        if (loadingInterval) {
+                            clearInterval(loadingInterval);
+                            loadingInterval = null;
+                        }
+                        
+                        setTimeout(hideGlobalLoading, 300);
+                    }
+                }, 200);
+            });
         });
 
         // Button Loading Functionality
@@ -328,27 +465,83 @@
             justify-content: center;
             align-items: center;
             opacity: 1;
-            transition: opacity 0.3s ease-out;
+            transition: opacity 0.4s cubic-bezier(0.4, 0, 0.2, 1);
         }
 
         .global-loading-container {
             text-align: center;
             color: white;
+            max-width: 300px;
+            padding: 2rem;
         }
 
-        .global-loading-spinner {
-            width: 50px;
-            height: 50px;
-            border: 4px solid rgba(255, 255, 255, 0.3);
-            border-top: 4px solid white;
+        .global-loading-spinner-modern {
+            position: relative;
+            width: 80px;
+            height: 80px;
+            margin: 0 auto 1.5rem;
+        }
+
+        .spinner-ring {
+            position: absolute;
+            border: 3px solid transparent;
             border-radius: 50%;
-            animation: globalSpin 1s linear infinite;
-            margin: 0 auto;
+            animation: modernSpin 1.5s cubic-bezier(0.68, -0.55, 0.265, 1.55) infinite;
         }
 
-        @keyframes globalSpin {
+        .spinner-ring:nth-child(1) {
+            width: 80px;
+            height: 80px;
+            border-top: 3px solid rgba(255, 255, 255, 0.9);
+            animation-delay: 0s;
+        }
+
+        .spinner-ring:nth-child(2) {
+            width: 60px;
+            height: 60px;
+            top: 10px;
+            left: 10px;
+            border-top: 3px solid rgba(255, 255, 255, 0.7);
+            animation-delay: -0.15s;
+            animation-direction: reverse;
+        }
+
+        .spinner-ring:nth-child(3) {
+            width: 40px;
+            height: 40px;
+            top: 20px;
+            left: 20px;
+            border-top: 3px solid rgba(255, 255, 255, 0.5);
+            animation-delay: -0.3s;
+        }
+
+        @keyframes modernSpin {
             0% { transform: rotate(0deg); }
             100% { transform: rotate(360deg); }
+        }
+
+        .loading-progress-container {
+            width: 100%;
+            height: 4px;
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 2px;
+            margin: 1rem 0;
+            overflow: hidden;
+        }
+
+        .loading-progress-bar {
+            height: 100%;
+            background: linear-gradient(90deg, #ffffff, #f3f4f6, #ffffff);
+            background-size: 200% 100%;
+            border-radius: 2px;
+            width: 0%;
+            transition: width 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            animation: progressShimmer 2s infinite;
+        }
+
+        @keyframes progressShimmer {
+            0% { background-position: 200% 0; }
+            100% { background-position: -200% 0; }
         }
 
         /* Animação de entrada para o conteúdo principal */
@@ -369,17 +562,41 @@
 
         /* Responsividade */
         @media (max-width: 768px) {
-            .global-loading-spinner {
-                width: 40px;
-                height: 40px;
+            .global-loading-spinner-modern {
+                width: 60px;
+                height: 60px;
+            }
+            
+            .spinner-ring:nth-child(1) {
+                width: 60px;
+                height: 60px;
+            }
+            
+            .spinner-ring:nth-child(2) {
+                width: 45px;
+                height: 45px;
+                top: 7.5px;
+                left: 7.5px;
+            }
+            
+            .spinner-ring:nth-child(3) {
+                width: 30px;
+                height: 30px;
+                top: 15px;
+                left: 15px;
+            }
+            
+            .global-loading-container {
+                padding: 1rem;
+                max-width: 250px;
             }
             
             .global-loading-container h5 {
-                font-size: 1.2rem;
+                font-size: 1.1rem;
             }
             
             .global-loading-container p {
-                font-size: 0.9rem;
+                font-size: 0.85rem;
             }
         }
 

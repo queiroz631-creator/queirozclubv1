@@ -339,18 +339,21 @@ def verificar_login_automatico():
             resultado_sorteio = db.execute_select(sql_sorteio_atual)
             num_sorteio_atual = resultado_sorteio[0][0] if resultado_sorteio and resultado_sorteio[0][0] else 1
             db.close()
+            
+            if num_sorteio_cliente == num_sorteio_atual:
+                # Login automático bem-sucedido
+                session['cpf'] = cpf
+                flash('Login automático realizado com sucesso!', 'success')
+                return redirect(url_for('dashboard.dashboard'))
+            else:
+                # Sorteio diferente - redirecionar para confirmação
+                session['cpf_pendente'] = cpf
+                return redirect(url_for('cliente.confirmar_sorteio'))
         else:
-            num_sorteio_atual = 1  # Fallback
-        
-        if num_sorteio_cliente == num_sorteio_atual:
-            # Login automático bem-sucedido
+            # Sem conexão com banco - aceitar login automático direto
             session['cpf'] = cpf
             flash('Login automático realizado com sucesso!', 'success')
             return redirect(url_for('dashboard.dashboard'))
-        else:
-            # Sorteio diferente - redirecionar para confirmação
-            session['cpf_pendente'] = cpf
-            return redirect(url_for('cliente.confirmar_sorteio'))
             
     except Exception as e:
         logging.error(f"Erro no login automático: {e}")

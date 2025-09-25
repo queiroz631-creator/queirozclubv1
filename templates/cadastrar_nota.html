@@ -76,6 +76,27 @@
 
 {% block scripts %}
 <script>
+    // Validação do campo número da nota - aceita apenas números
+    document.getElementById('num_nota').addEventListener('input', function(e) {
+        let valor = e.target.value;
+        
+        // Remove tudo que não é número
+        let numeros = valor.replace(/\D/g, '');
+        
+        // Atualiza o campo apenas com números
+        e.target.value = numeros;
+    });
+    
+    // Impede colagem de texto não numérico no campo número da nota
+    document.getElementById('num_nota').addEventListener('paste', function(e) {
+        // Aguarda o paste ser processado
+        setTimeout(() => {
+            let valor = e.target.value;
+            let numeros = valor.replace(/\D/g, '');
+            e.target.value = numeros;
+        }, 10);
+    });
+    
     // Formatação automática de moeda no campo valor
     document.getElementById('valor').addEventListener('input', function(e) {
         let valor = e.target.value;
