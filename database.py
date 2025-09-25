@@ -8,12 +8,7 @@ class DatabaseConnection:
 
     def __init__(self):
         # Configuração de conexão com SQL Server
-        self.server = os.getenv('SQL_SERVER', '168.231.94.141')
-        self.database = os.getenv('SQL_DATABASE', 'Sorteio_qz')
-        self.username = os.getenv('SQL_USERNAME', 'sa')
-        self.password = os.getenv('SQL_PASSWORD', 'Edua1820@1820')
-        self.connection = None
-
+        
     def connect(self):
         """Estabelecer conexão com SQL Server"""
         try:
